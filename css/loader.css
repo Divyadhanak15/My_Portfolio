@@ -1,0 +1,102 @@
+/* =========================================================
+   DIVYA DHANAK — "Neural Build" page loader
+   Nodes fly in and wire themselves into the DD monogram while
+   the delivery pipeline (Problem → … → Optimization) tracks
+   the real page-load progress. Driven by js/loader.js.
+   ========================================================= */
+
+/* Hidden unless JS is running (no-JS visitors never get stuck) */
+#loader{display:none}
+html.dd-loading,html.dd-loading body{overflow:hidden}
+html.dd-loading #loader,#loader.is-leaving{display:block}
+
+#loader{
+  position:fixed;inset:0;z-index:3000;overflow:hidden;color:var(--ink);
+  background:radial-gradient(120% 90% at 50% 40%,#101C33 0%,var(--bg) 62%);
+  clip-path:inset(0 0 0 0);
+  transition:clip-path .85s cubic-bezier(.76,0,.24,1),opacity .4s ease;
+}
+
+/* Faint blueprint grid behind the network */
+#loader::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:48px 48px;
+  -webkit-mask-image:radial-gradient(60% 55% at 50% 42%,#000,transparent);
+          mask-image:radial-gradient(60% 55% at 50% 42%,#000,transparent);
+}
+
+/* Glowing edge that rides the curtain as it lifts */
+#loader::after{
+  content:"";position:absolute;left:0;right:0;bottom:0;height:1px;opacity:0;pointer-events:none;
+  background:linear-gradient(90deg,transparent,var(--accent) 30%,var(--signal) 70%,transparent);
+  box-shadow:0 0 18px 2px rgba(94,220,198,.45);
+  transition:opacity .2s;
+}
+#loader.is-done{clip-path:inset(0 0 100% 0);pointer-events:none}
+#loader.is-done::after{opacity:1}
+
+.ld-net{position:absolute;inset:0;width:100%;height:100%;display:block}
+
+/* ---------- HUD under the monogram ---------- */
+.ld-hud{
+  position:absolute;left:50%;top:var(--hud-y,64%);
+  width:min(540px,86vw);transform:translateX(-50%);
+  animation:ldIn .6s .15s var(--ease) both;
+  transition:opacity .3s ease,transform .3s ease;
+}
+#loader.is-leaving .ld-hud{animation:none;opacity:0;transform:translate(-50%,10px)}
+
+.ld-name{
+  text-align:center;margin-bottom:26px;
+  font:500 1rem/1.2 var(--font);letter-spacing:.02em;color:var(--ink);
+}
+.ld-meta{
+  display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px;
+  font:400 .72rem var(--mono);color:var(--dim);
+}
+.ld-pct{font:500 .82rem var(--mono);color:var(--accent);font-variant-numeric:tabular-nums}
+
+/* Pipeline = progress bar. --p (0..1) is set from JS */
+.ld-pipe{
+  --p:0;position:relative;display:flex;justify-content:space-between;
+  list-style:none;margin:0 38px;padding:0 0 26px;
+}
+.ld-pipe::before,.ld-pipe::after{
+  content:"";position:absolute;left:4px;right:4px;top:4px;height:1px;background:var(--line-2);
+}
+.ld-pipe::after{
+  right:auto;width:calc((100% - 8px) * var(--p));
+  background:linear-gradient(90deg,var(--accent-strong),var(--accent),var(--signal));
+  box-shadow:0 0 10px rgba(127,166,255,.5);
+}
+.ld-pipe li{position:relative;z-index:1;width:9px;height:9px}
+.ld-pipe i{
+  display:block;width:9px;height:9px;border-radius:50%;
+  background:var(--bg);border:1px solid var(--line-2);
+  transition:background .3s,border-color .3s;
+}
+.ld-pipe span{
+  position:absolute;top:20px;left:50%;transform:translateX(-50%);white-space:nowrap;
+  font:400 .66rem var(--mono);color:var(--dim);transition:color .3s,opacity .3s;
+}
+
+.ld-pipe li.is-done i{background:var(--accent);border-color:var(--accent)}
+.ld-pipe li.is-done span{color:var(--muted)}
+.ld-pipe li.is-active i{background:var(--signal);border-color:var(--signal);animation:ldPing 1.1s ease-out infinite}
+.ld-pipe li.is-active span{color:var(--signal)}
+
+@keyframes ldPing{0%{box-shadow:0 0 0 0 rgba(94,220,198,.55)}100%{box-shadow:0 0 0 9px rgba(94,220,198,0)}}
+@keyframes ldIn{from{opacity:0;transform:translate(-50%,8px)}}
+
+/* Phones: only the active stage keeps its label */
+@media (max-width:600px){
+  .ld-name{margin-bottom:20px}
+  .ld-pipe{margin:0 30px}
+  .ld-pipe li:not(.is-active) span{opacity:0}
+}
+
+/* Reduced motion: no curtain, just a quick fade */
+@media (prefers-reduced-motion:reduce){
+  #loader.is-done{clip-path:none;opacity:0}
+}
